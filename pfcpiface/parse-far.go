@@ -5,7 +5,7 @@ package main
 
 import (
 	"errors"
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wmnsk/go-pfcp/ie"
 )
@@ -30,16 +30,16 @@ type far struct {
 }
 
 func (f *far) printFAR() {
-	log.Println("------------------ FAR ---------------------")
-	log.Println("FAR ID:", f.farID)
-	log.Println("fseID:", f.fseID)
-	log.Println("action:", f.action)
-	log.Println("tunnelType:", f.tunnelType)
-	log.Println("tunnelIP4Src:", f.tunnelIP4Src)
-	log.Println("tunnelIP4Dst:", f.tunnelIP4Dst)
-	log.Println("tunnelTEID:", f.tunnelTEID)
-	log.Println("tunnelPort:", f.tunnelPort)
-	log.Println("--------------------------------------------")
+	log.Debug("------------------ FAR ---------------------")
+	log.Debug("FAR ID:", f.farID)
+	log.Debug("fseID:", f.fseID)
+	log.Debug("action:", f.action)
+	log.Debug("tunnelType:", f.tunnelType)
+	log.Debug("tunnelIP4Src:", f.tunnelIP4Src)
+	log.Debug("tunnelIP4Dst:", f.tunnelIP4Dst)
+	log.Debug("tunnelTEID:", f.tunnelTEID)
+	log.Debug("tunnelPort:", f.tunnelPort)
+	log.Debug("--------------------------------------------")
 }
 
 func (f *far) parseFAR(farIE *ie.IE, fseid uint64, upf *upf, op operation) error {
@@ -57,7 +57,7 @@ func (f *far) parseFAR(farIE *ie.IE, fseid uint64, upf *upf, op operation) error
 	}
 
 	if (action&0x02)>>1 == 0 {
-		log.Println("Handling forward action only")
+		log.Debug("Handling forward action only")
 		// TODO: Handle buffer
 		f.action = farDrop
 		return nil
@@ -83,7 +83,7 @@ func (f *far) parseFAR(farIE *ie.IE, fseid uint64, upf *upf, op operation) error
 		case ie.OuterHeaderCreation:
 			ohcFields, err := fwdIE.OuterHeaderCreation()
 			if err != nil {
-				log.Println("Unable to parse OuterHeaderCreationFields!")
+				log.Error("Unable to parse OuterHeaderCreationFields!")
 				continue
 			}
 			f.tunnelTEID = ohcFields.TEID
@@ -93,7 +93,7 @@ func (f *far) parseFAR(farIE *ie.IE, fseid uint64, upf *upf, op operation) error
 		case ie.DestinationInterface:
 			dstIface, err := fwdIE.DestinationInterface()
 			if err != nil {
-				log.Println("Unable to parse DestinationInterface field")
+				log.Error("Unable to parse DestinationInterface field")
 				continue
 			}
 			if dstIface == ie.DstInterfaceAccess {

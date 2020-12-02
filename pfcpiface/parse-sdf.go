@@ -5,8 +5,7 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ type endpoint struct {
 
 func (ep *endpoint) parseNet(ipnet string) error {
 	ipNetFields := strings.Split(ipnet, "/")
-	log.Println(ipNetFields)
+	log.Debug(ipNetFields)
 	switch len(ipNetFields) {
 	case 1:
 		ipnet = ipNetFields[0] + "/32"
@@ -85,7 +84,7 @@ func (ipf *ipFilterRule) parseFlowDesc(flowDesc, ueIP string) error {
 
 	// bring to common intermediate representation
 	xform := func(i int) {
-		log.Println(fields)
+		log.Debug(fields)
 		switch fields[i] {
 		case "any":
 			fields[i] = "0.0.0.0/0"
@@ -96,18 +95,18 @@ func (ipf *ipFilterRule) parseFlowDesc(flowDesc, ueIP string) error {
 				fields[i] = "0.0.0.0/0"
 			}
 		}
-		log.Println(fields)
+		log.Debug(fields)
 	}
 
 	for i := 3; i < len(fields); i++ {
-		log.Println(fields[i])
+		log.Debug(fields[i])
 		switch fields[i] {
 		case "from":
 			i++
 			xform(i)
 			err := ipf.src.parseNet(fields[i])
 			if err != nil {
-				log.Println(err)
+				log.Error(err)
 			}
 
 			if fields[i+1] != "to" {
@@ -119,7 +118,7 @@ func (ipf *ipFilterRule) parseFlowDesc(flowDesc, ueIP string) error {
 			xform(i)
 			err := ipf.dst.parseNet(fields[i])
 			if err != nil {
-				log.Println(err)
+				log.Error(err)
 			}
 
 			if i < len(fields)-1 {
@@ -129,7 +128,7 @@ func (ipf *ipFilterRule) parseFlowDesc(flowDesc, ueIP string) error {
 		}
 	}
 
-	fmt.Println(ipf)
+	log.Debug(ipf)
 	return nil
 }
 

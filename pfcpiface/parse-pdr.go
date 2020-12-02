@@ -4,7 +4,7 @@
 package main
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 
 	"github.com/wmnsk/go-pfcp/ie"
@@ -38,29 +38,29 @@ type pdr struct {
 }
 
 func (p *pdr) printPDR() {
-	log.Println("------------------ PDR ---------------------")
-	log.Println("Src Iface:", p.srcIface)
-	log.Println("tunnelIP4Dst:", int2ip(p.tunnelIP4Dst))
-	log.Println("tunnelTEID:", p.tunnelTEID)
-	log.Println("srcIP:", int2ip(p.srcIP))
-	log.Println("dstIP:", int2ip(p.dstIP))
-	log.Println("srcPort:", p.srcPort)
-	log.Println("dstPort:", p.dstPort)
-	log.Println("proto:", p.proto)
-	log.Println("Src Iface Mask:", p.srcIfaceMask)
-	log.Println("tunnelIP4Dst Mask:", int2ip(p.tunnelIP4DstMask))
-	log.Println("tunnelTEIDMask Mask:", p.tunnelTEIDMask)
-	log.Println("srcIP Mask:", int2ip(p.srcIPMask))
-	log.Println("dstIP Mask:", int2ip(p.dstIPMask))
-	log.Println("srcPort Mask:", p.srcPortMask)
-	log.Println("dstPort Mask:", p.dstPortMask)
-	log.Println("proto Mask:", p.protoMask)
-	log.Println("pdrID:", p.pdrID)
-	log.Println("fseID", p.fseID)
-	log.Println("ctrID:", p.ctrID)
-	log.Println("farID:", p.farID)
-	log.Println("needDecap:", p.needDecap)
-	log.Println("--------------------------------------------")
+	log.Debug("------------------ PDR ---------------------")
+	log.Debug("Src Iface:", p.srcIface)
+	log.Debug("tunnelIP4Dst:", int2ip(p.tunnelIP4Dst))
+	log.Debug("tunnelTEID:", p.tunnelTEID)
+	log.Debug("srcIP:", int2ip(p.srcIP))
+	log.Debug("dstIP:", int2ip(p.dstIP))
+	log.Debug("srcPort:", p.srcPort)
+	log.Debug("dstPort:", p.dstPort)
+	log.Debug("proto:", p.proto)
+	log.Debug("Src Iface Mask:", p.srcIfaceMask)
+	log.Debug("tunnelIP4Dst Mask:", int2ip(p.tunnelIP4DstMask))
+	log.Debug("tunnelTEIDMask Mask:", p.tunnelTEIDMask)
+	log.Debug("srcIP Mask:", int2ip(p.srcIPMask))
+	log.Debug("dstIP Mask:", int2ip(p.dstIPMask))
+	log.Debug("srcPort Mask:", p.srcPortMask)
+	log.Debug("dstPort Mask:", p.dstPortMask)
+	log.Debug("proto Mask:", p.protoMask)
+	log.Debug("pdrID:", p.pdrID)
+	log.Debug("fseID", p.fseID)
+	log.Debug("ctrID:", p.ctrID)
+	log.Debug("farID:", p.farID)
+	log.Debug("needDecap:", p.needDecap)
+	log.Debug("--------------------------------------------")
 }
 
 func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
@@ -71,7 +71,7 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 		case ie.UEIPAddress:
 			ueIPaddr, err := pdiIE.UEIPAddress()
 			if err != nil {
-				log.Println("Failed to parse UE IP address")
+				log.Error("Failed to parse UE IP address")
 				continue
 			}
 
@@ -79,12 +79,12 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 		case ie.SourceInterface:
 			srcIface, err := pdiIE.SourceInterface()
 			if err != nil {
-				log.Println("Failed to parse Source Interface IE!")
+				log.Error("Failed to parse Source Interface IE!")
 				continue
 			}
 
 			if srcIface == ie.SrcInterfaceCPFunction {
-				log.Println("Source Interface CP Function not supported yet")
+				log.Error("Source Interface CP Function not supported yet")
 			} else if srcIface == ie.SrcInterfaceAccess {
 				p.srcIface = access
 				p.srcIfaceMask = 0xFF
@@ -95,7 +95,7 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 		case ie.FTEID:
 			fteid, err := pdiIE.FTEID()
 			if err != nil {
-				log.Println("Failed to parse FTEID IE")
+				log.Error("Failed to parse FTEID IE")
 				continue
 			}
 			teid := fteid.TEID
@@ -106,7 +106,7 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 				p.tunnelTEIDMask = 0xFFFFFFFF
 				p.tunnelIP4Dst = ip2int(tunnelIPv4Address)
 				p.tunnelIP4DstMask = 0xFFFFFFFF
-				log.Println("TunnelIPv4Address:", tunnelIPv4Address)
+				log.Debug("TunnelIPv4Address:", tunnelIPv4Address)
 			}
 		case ie.QFI:
 			// Do nothing for the time being
@@ -130,21 +130,21 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 
 			appID, err := ie2.ApplicationID()
 			if err != nil {
-				log.Println("Unable to parse Application ID", err)
+				log.Error("Unable to parse Application ID", err)
 				continue
 			}
 
 			apfd, ok := appPFDs[appID]
 			if !ok {
-				log.Println("Unable to find Application ID", err)
+				log.Error("Unable to find Application ID", err)
 				continue
 			}
 			if appID != apfd.appID {
 				log.Fatalln("Mismatch in App ID", appID, apfd.appID)
 			}
-			log.Println("inside application id", apfd.appID, apfd.flowDescs)
+			log.Debug("inside application id", apfd.appID, apfd.flowDescs)
 			for _, flowDesc := range apfd.flowDescs {
-				log.Println("flow desc", flowDesc)
+				log.Debug("flow desc", flowDesc)
 				var ipf ipFilterRule
 				err = ipf.parseFlowDesc(flowDesc, ueIP4.String())
 				if err != nil {
@@ -152,7 +152,7 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 				}
 
 				if (p.srcIface == access && ipf.direction == "out") || (p.srcIface == core && ipf.direction == "in") {
-					log.Println("Found a match", p.srcIface, flowDesc)
+					log.Debug("Found a match", p.srcIface, flowDesc)
 					if ipf.proto != reservedProto {
 						p.proto = ipf.proto
 						p.protoMask = reservedProto
@@ -170,17 +170,17 @@ func (p *pdr) parsePDI(pdiIEs []*ie.IE, appPFDs map[string]appPFD) error {
 			// Do nothing for the time being
 			sdfFields, err := ie2.SDFFilter()
 			if err != nil {
-				log.Println("Unable to parse SDF filter!")
+				log.Error("Unable to parse SDF filter!")
 				continue
 			}
 
 			flowDesc := sdfFields.FlowDescription
 			if flowDesc == "" {
-				log.Println("Empty SDF filter description!")
+				log.Debug("Empty SDF filter description!")
 				// TODO: Implement referencing SDF ID
 				continue
 			}
-			log.Println("Flow Description is:", flowDesc)
+			log.Debug("Flow Description is:", flowDesc)
 
 			var ipf ipFilterRule
 			err = ipf.parseFlowDesc(flowDesc, ueIP4.String())
@@ -216,19 +216,19 @@ func (p *pdr) parsePDR(ie1 *ie.IE, seid uint64, appPFDs map[string]appPFD) error
 
 	pdrID, err := ie1.PDRID()
 	if err != nil {
-		log.Println("Could not read PDR ID!")
+		log.Error("Could not read PDR ID!")
 		return nil
 	}
 
 	precedence, err := ie1.Precedence()
 	if err != nil {
-		log.Println("Could not read Precedence!")
+		log.Error("Could not read Precedence!")
 		return nil
 	}
 
 	pdi, err := ie1.PDI()
 	if err != nil {
-		log.Println("Could not read PDI!")
+		log.Error("Could not read PDI!")
 		return nil
 	}
 
@@ -244,7 +244,7 @@ func (p *pdr) parsePDR(ie1 *ie.IE, seid uint64, appPFDs map[string]appPFD) error
 
 	farID, err := ie1.FARID()
 	if err != nil {
-		log.Println("Could not read FAR ID!")
+		log.Error("Could not read FAR ID!")
 		return nil
 	}
 

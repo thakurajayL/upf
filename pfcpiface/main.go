@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -101,12 +101,13 @@ func ParseIP(name string, iface string) net.IP {
 	if err != nil {
 		log.Fatalln("Unable to parse", iface, " IP: ", err)
 	}
-	log.Println(iface, " IP: ", ip)
+	log.Info(iface, " IP: ", ip)
 	return ip
 }
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetReportCaller(true)
+	log.SetLevel(log.DebugLevel)
 
 	// cmdline args
 	flag.Parse()
@@ -114,7 +115,7 @@ func main() {
 	// read and parse json startup file
 	var conf Conf
 	ParseJSON(configPath, &conf)
-	log.Println(conf)
+	log.Info(conf)
 
 	accessIP := ParseIP(conf.AccessIface.IfName, "Access")
 	coreIP := ParseIP(conf.CoreIface.IfName, "Core")
@@ -154,16 +155,16 @@ func main() {
 			log.Fatalln("Invalid simulate method", simulate)
 		}
 
-		log.Println(*simulate, "sessions:", conf.MaxSessions)
+		log.Info(*simulate, "sessions:", conf.MaxSessions)
 		upf.sim(*simulate)
 		return
 	}
 
 	if conf.CPIface.SrcIP == "" {
 		if conf.CPIface.DestIP != "" {
-			log.Println("Dest address ", conf.CPIface.DestIP)
+			log.Info("Dest address ", conf.CPIface.DestIP)
 			n4SrcIP = getLocalIP(conf.CPIface.DestIP)
-			log.Println("SPGWU/UPF address IP: ", n4SrcIP.String())
+			log.Info("SPGWU/UPF address IP: ", n4SrcIP.String())
 		}
 	} else {
 		addrs, err := net.LookupHost(conf.CPIface.SrcIP)
@@ -172,7 +173,7 @@ func main() {
 		}
 	}
 
-	log.Println("N4 local IP: ", n4SrcIP.String())
+	log.Info("N4 local IP: ", n4SrcIP.String())
 
 	go pfcpifaceMainLoop(upf, accessIP.String(), coreIP.String(), n4SrcIP.String(), conf.CPIface.DestIP)
 
